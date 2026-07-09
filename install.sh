@@ -44,7 +44,7 @@ run_linux_client() {
 show_menu() {
   echo "Qcby-Agent 安装入口"
   echo "1) 安装 / 升级服务端"
-  echo "2) 安装 / 升级 Linux 客户端"
+  echo "2) 管理 Linux 客户端"
   echo "q) 退出"
   read -r -p "请选择 [1/2/q]: " choice
   case "${choice}" in

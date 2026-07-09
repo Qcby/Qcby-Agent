@@ -252,7 +252,7 @@ cd /opt/qcby-agent
 
 ---
 
-## 五、Linux 客户端安装
+## 五、Linux 客户端安装与管理
 
 ### 方式 1：统一入口
 
@@ -266,10 +266,31 @@ bash install.sh client
 bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh) client
 ```
 
+执行后会进入管理菜单，支持：
+
+- 安装/更新
+- 卸载
+- 启动
+- 重启
+- 停止
+- 查看状态
+- 查看日志
+- 重新配置
+
 ### 方式 2：直接脚本
 
 ```bash
 bash scripts/install-linux-client.sh
+```
+
+也可以直接指定动作：
+
+```bash
+bash scripts/install-linux-client.sh install
+bash scripts/install-linux-client.sh status
+bash scripts/install-linux-client.sh logs
+bash scripts/install-linux-client.sh reconfigure
+bash scripts/install-linux-client.sh uninstall
 ```
 
 安装时需要填写：
