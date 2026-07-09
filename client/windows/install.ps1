@@ -73,17 +73,37 @@ function Get-CacheBustedUrl {
     return "$join${sep}t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
 }
 
+function Get-AgentDownloadUrls {
+    $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    return @(
+        ("{0}/client/windows/agent.ps1?t={1}" -f $RawBase.TrimEnd('/'), $stamp),
+        ("https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/agent.ps1?t={0}" -f $stamp),
+        ("https://raw.githubusercontent.com/Qcby/Qcby-Agent/HEAD/client/windows/agent.ps1?t={0}" -f $stamp),
+        ("https://cdn.jsdelivr.net/gh/Qcby/Qcby-Agent@main/client/windows/agent.ps1?t={0}" -f $stamp)
+    )
+}
+
 function Get-AgentSourcePath {
     $repoAgent = Join-Path $PSScriptRoot 'agent.ps1'
     if (Test-Path $repoAgent) { return $repoAgent }
 
     $tempAgent = Join-Path $env:TEMP "qcby-agent-agent.ps1"
-    $downloadUrl = Get-CacheBustedUrl -RelativePath 'client/windows/agent.ps1'
-    Invoke-WebRequest -Uri $downloadUrl -OutFile $tempAgent -UseBasicParsing
-    if (-not (Test-Path $tempAgent)) {
-        throw ((U '\u8fdc\u7a0b\u4e0b\u8f7d agent.ps1 \u5931\u8d25\uff1a') + $downloadUrl)
+    $lastError = $null
+    foreach ($downloadUrl in (Get-AgentDownloadUrls)) {
+        try {
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $tempAgent -UseBasicParsing
+            if ((Test-Path $tempAgent) -and (Get-Item $tempAgent).Length -gt 0) {
+                return $tempAgent
+            }
+        } catch {
+            $lastError = $_
+        }
     }
-    return $tempAgent
+    if (Test-Path $tempAgent) { Remove-Item -LiteralPath $tempAgent -Force -ErrorAction SilentlyContinue }
+    if ($lastError) {
+        throw ((U '\u8fdc\u7a0b\u4e0b\u8f7d agent.ps1 \u5931\u8d25\uff0c\u6240\u6709\u56de\u9000\u5730\u5740\u5747\u4e0d\u53ef\u7528\u3002\u6700\u540e\u9519\u8bef\uff1a') + ' ' + $lastError.Exception.Message)
+    }
+    throw (U '\u8fdc\u7a0b\u4e0b\u8f7d agent.ps1 \u5931\u8d25\uff0c\u672a\u83b7\u53d6\u5230\u53ef\u7528\u6587\u4ef6\u3002')
 }
 
 Ensure-Admin
