@@ -196,7 +196,7 @@ cd /opt/qcby-agent
 
 ---
 
-## 四、Linux 服务端一键安装
+## 四、Linux 服务端安装与管理
 
 在仓库根目录执行：
 
@@ -216,7 +216,34 @@ bash install.sh server
 bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh) server
 ```
 
-安装器会提示你输入：
+执行后会进入服务端管理菜单，支持：
+
+- 安装/重新配置
+- 升级/更新
+- 卸载
+- 启动
+- 重启
+- 停止
+- 查看状态
+- 查看日志
+- 退出
+
+其中：
+
+- **升级/更新**：默认保留当前 `.env` 配置，直接拉新镜像并重建容器
+- **安装/重新配置**：才会重新询问端口、Token、管理员账号等配置项
+
+### 直接命令方式
+
+```bash
+bash scripts/install-server.sh install
+bash scripts/install-server.sh upgrade
+bash scripts/install-server.sh status
+bash scripts/install-server.sh logs
+bash scripts/install-server.sh uninstall
+```
+
+首次安装 / 重新配置时，安装器会提示你输入：
 
 - Docker 镜像标签
 - 绑定端口
