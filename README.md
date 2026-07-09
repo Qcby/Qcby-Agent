@@ -9,7 +9,6 @@ Qcby-Agent 是一个轻量的 Win / Linux 节点监控项目，提供：
 - 设备公网 IP、地理信息、在线状态、资源指标展示
 - 后台修改 Agent Token、绑定端口、设备展示名
 
-> 仓库原名为 `QcbyTz`。如果你看到旧地址，GitHub 会自动重定向到新的 `Qcby-Agent` 仓库地址。
 
 ---
 
@@ -26,54 +25,7 @@ install.sh               统一安装入口
 
 ---
 
-## 一、Git 使用说明
 
-### 1) 克隆仓库
-
-```bash
-git clone https://github.com/Qcby/Qcby-Agent.git
-cd Qcby-Agent
-```
-
-如果你本地还在使用旧地址：
-
-```bash
-git clone https://github.com/Qcby/QcbyTz.git
-```
-
-GitHub 也会自动跳转到新仓库。
-
-### 2) 常用开发流程
-
-```bash
-git checkout -b feature/your-change
-git status
-git add .
-git commit -m "feat: describe your change"
-git push origin feature/your-change
-```
-
-拉取最新代码：
-
-```bash
-git pull --rebase origin main
-```
-
-### 3) 推荐发布标签
-
-建议按语义版本发布：
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-推荐同时维护：
-
-- `main`
-- `v1.0.0`、`v1.0.1` 这类版本标签
-
----
 
 ## 二、服务端本地开发
 
