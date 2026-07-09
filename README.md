@@ -306,6 +306,20 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1
 ```
 
+### 1.1) 一条命令远程安装
+
+以管理员 PowerShell 运行：
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp
+```
+
+如果你想直接带参数安装：
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp -ServerHost '146.56.140.150' -Port 8080 -Token 'change-me-token'
+```
+
 ### 2) 直接传参安装
 
 ```powershell

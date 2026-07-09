@@ -9,6 +9,7 @@ param(
     [string[]]$Tags = @(),
     [string]$InstallDir = "$env:ProgramData\\Qcby-Agent",
     [string]$TaskName = "Qcby-Agent-Client",
+    [string]$RawBase = $(if ($env:QCBY_AGENT_RAW_BASE) { $env:QCBY_AGENT_RAW_BASE } else { 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main' }),
     [switch]$Uninstall,
     [switch]$NoStart
 )
@@ -39,6 +40,27 @@ function Remove-Client {
     Write-Host "已卸载 Windows 客户端：$TaskName"
 }
 
+function Get-CacheBustedUrl {
+    param([string]$RelativePath)
+    $base = $RawBase.TrimEnd('/')
+    $join = "$base/$RelativePath"
+    $sep = $(if ($join -like '*?*') { '&' } else { '?' })
+    return "$join${sep}t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+}
+
+function Get-AgentSourcePath {
+    $repoAgent = Join-Path $PSScriptRoot 'agent.ps1'
+    if (Test-Path $repoAgent) { return $repoAgent }
+
+    $tempAgent = Join-Path $env:TEMP "qcby-agent-agent.ps1"
+    $downloadUrl = Get-CacheBustedUrl -RelativePath 'client/windows/agent.ps1'
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $tempAgent -UseBasicParsing
+    if (-not (Test-Path $tempAgent)) {
+        throw "远程下载 agent.ps1 失败：$downloadUrl"
+    }
+    return $tempAgent
+}
+
 Ensure-Admin
 
 if ($Uninstall) {
@@ -56,10 +78,7 @@ if (-not $Tags -or $Tags.Count -eq 0) {
     if ($rawTags) { $Tags = @($rawTags -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 }
 
-$repoAgent = Join-Path $PSScriptRoot 'agent.ps1'
-if (-not (Test-Path $repoAgent)) {
-    throw "未找到 agent.ps1：$repoAgent"
-}
+$sourceAgent = Get-AgentSourcePath
 
 $serverUrl = "http://$ServerHost`:$Port/api/v1/report"
 $agentFile = Join-Path $InstallDir 'agent.ps1'
@@ -67,7 +86,7 @@ $configFile = Join-Path $InstallDir 'agent-config.ps1'
 $runnerFile = Join-Path $InstallDir 'run-agent.ps1'
 
 New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-Copy-Item -LiteralPath $repoAgent -Destination $agentFile -Force
+Copy-Item -LiteralPath $sourceAgent -Destination $agentFile -Force
 
 $tagsLiteral = ($Tags | ForEach-Object { "'{0}'" -f ($_.Replace("'", "''")) }) -join ', '
 $configContent = @"
