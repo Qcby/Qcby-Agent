@@ -7,6 +7,7 @@ SERVICE_NAME="qcby-agent-client"
 CONFIG_FILE="${INSTALL_DIR}/agent.env"
 AGENT_FILE="${INSTALL_DIR}/agent.sh"
 SYSTEMD_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+RAW_BASE="${QCBY_AGENT_RAW_BASE:-https://raw.githubusercontent.com/Qcby/Qcby-Agent/main}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SOURCE_AGENT="${REPO_DIR}/client/linux/agent.sh"
@@ -20,6 +21,19 @@ fi
 say() { echo "$*"; }
 fail() { echo "[ERROR] $*" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1 || fail "缺少命令: $1"; }
+
+download_agent() {
+  local target="$1"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "${RAW_BASE}/client/linux/agent.sh" -o "$target"
+    return
+  fi
+  if command -v wget >/dev/null 2>&1; then
+    wget -qO "$target" "${RAW_BASE}/client/linux/agent.sh"
+    return
+  fi
+  fail "缺少 curl 或 wget，无法远程下载 Linux agent。"
+}
 
 read_tty() {
   local prompt="$1"
@@ -37,7 +51,6 @@ read_tty() {
 main() {
   need_cmd bash
   need_cmd systemctl
-  [[ -f "$SOURCE_AGENT" ]] || fail "未找到 Linux agent: $SOURCE_AGENT"
 
   SERVER_HOST="$(read_tty "服务端 IP / 域名" "146.56.140.150")"
   SERVER_PORT="$(read_tty "服务端端口" "8080")"
@@ -50,7 +63,14 @@ main() {
 
   SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}/api/v1/report"
   ${SUDO} mkdir -p "$INSTALL_DIR"
-  ${SUDO} cp "$SOURCE_AGENT" "$AGENT_FILE"
+  if [[ -f "$SOURCE_AGENT" ]]; then
+    ${SUDO} cp "$SOURCE_AGENT" "$AGENT_FILE"
+  else
+    temp_agent="$(mktemp)"
+    download_agent "$temp_agent"
+    ${SUDO} cp "$temp_agent" "$AGENT_FILE"
+    rm -f "$temp_agent"
+  fi
   ${SUDO} chmod +x "$AGENT_FILE"
 
   ${SUDO} tee "$CONFIG_FILE" >/dev/null <<EOF
