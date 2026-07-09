@@ -40,6 +40,26 @@ function Remove-Client {
     Write-Host "已卸载 Windows 客户端：$TaskName"
 }
 
+function Get-PublicIp {
+    foreach ($url in @('https://api4.ipify.org', 'https://api.ip.sb/ip', 'https://api.ipify.org')) {
+        try {
+            $value = (Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 8).ToString().Trim()
+            if ($value) { return $value }
+        } catch {}
+    }
+    return ''
+}
+
+function Get-PrivateIp {
+    try {
+        $ip = Get-NetIPAddress -AddressFamily IPv4 |
+            Where-Object { $_.IPAddress -notlike '169.254*' -and $_.IPAddress -ne '127.0.0.1' } |
+            Select-Object -First 1 -ExpandProperty IPAddress
+        if ($ip) { return $ip.ToString().Trim() }
+    } catch {}
+    return ''
+}
+
 function Get-CacheBustedUrl {
     param([string]$RelativePath)
     $base = $RawBase.TrimEnd('/')
@@ -68,7 +88,12 @@ if ($Uninstall) {
     exit 0
 }
 
-if (-not $ServerHost) { $ServerHost = Read-Value -Prompt '服务端 IP / 域名' -Default '146.56.140.150' }
+if (-not $ServerHost) {
+    $defaultServerHost = Get-PublicIp
+    if (-not $defaultServerHost) { $defaultServerHost = Get-PrivateIp }
+    if (-not $defaultServerHost) { $defaultServerHost = $env:COMPUTERNAME }
+    $ServerHost = Read-Value -Prompt '服务端 IP / 域名（默认自动探测本机 IP）' -Default $defaultServerHost
+}
 if (-not $Token) { $Token = Read-Value -Prompt 'Agent Token' -Default 'change-me-token' }
 if (-not $AgentId) { $AgentId = Read-Value -Prompt 'Agent ID' -Default $env:COMPUTERNAME }
 if (-not $Region) { $Region = Read-Value -Prompt '区域（可留空）' }

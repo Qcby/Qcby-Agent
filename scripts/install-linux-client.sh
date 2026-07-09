@@ -23,6 +23,28 @@ say() { echo "$*"; }
 fail() { echo "[ERROR] $*" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1 || fail "缺少命令: $1"; }
 
+get_public_ip() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsS --max-time 8 https://api4.ipify.org 2>/dev/null \
+      || curl -fsS --max-time 8 https://api.ip.sb/ip 2>/dev/null \
+      || curl -fsS --max-time 8 https://api.ipify.org 2>/dev/null \
+      || true
+    return
+  fi
+  if command -v wget >/dev/null 2>&1; then
+    wget -qO- --timeout=8 https://api4.ipify.org 2>/dev/null \
+      || wget -qO- --timeout=8 https://api.ip.sb/ip 2>/dev/null \
+      || wget -qO- --timeout=8 https://api.ipify.org 2>/dev/null \
+      || true
+    return
+  fi
+  true
+}
+
+get_private_ip() {
+  hostname -I 2>/dev/null | awk '{print $1}' || true
+}
+
 download_agent() {
   local target="$1"
   if command -v curl >/dev/null 2>&1; then
@@ -53,7 +75,11 @@ main() {
   need_cmd bash
   need_cmd systemctl
 
-  SERVER_HOST="$(read_tty "服务端 IP / 域名" "146.56.140.150")"
+  DEFAULT_SERVER_HOST="$(get_public_ip)"
+  if [[ -z "${DEFAULT_SERVER_HOST:-}" ]]; then
+    DEFAULT_SERVER_HOST="$(get_private_ip)"
+  fi
+  SERVER_HOST="$(read_tty "服务端 IP / 域名（默认自动探测本机 IP）" "${DEFAULT_SERVER_HOST:-}")"
   SERVER_PORT="$(read_tty "服务端端口" "8080")"
   TOKEN="$(read_tty "Agent Token" "change-me-token")"
   AGENT_ID="$(read_tty "节点唯一 ID（留空默认主机名）" "")"

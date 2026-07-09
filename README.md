@@ -274,7 +274,7 @@ bash scripts/install-linux-client.sh
 
 安装时需要填写：
 
-- 服务端 IP / 域名
+- 服务端 IP / 域名（默认自动探测当前执行机器的公网 IP，失败则回退内网 IP）
 - 服务端端口
 - Agent Token
 - Agent ID（可选）
@@ -317,14 +317,14 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 如果你想直接带参数安装：
 
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp -ServerHost '146.56.140.150' -Port 8080 -Token 'change-me-token'
+Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp -ServerHost '你的服务端IP或域名' -Port 8080 -Token '你的Token'
 ```
 
 ### 2) 直接传参安装
 
 ```powershell
 PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 `
-  -ServerHost "146.56.140.150" `
+  -ServerHost "你的服务端IP或域名" `
   -Port 8080 `
   -Token "change-me-token" `
   -AgentId "win-node-01" `
