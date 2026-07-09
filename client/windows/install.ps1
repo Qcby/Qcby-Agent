@@ -30,14 +30,14 @@ function Ensure-Admin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        throw "请以管理员 PowerShell 运行 install.ps1。"
+        throw "Please run install.ps1 in an elevated Administrator PowerShell window."
     }
 }
 
 function Remove-Client {
     try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue | Out-Null } catch {}
     if (Test-Path $InstallDir) { Remove-Item -LiteralPath $InstallDir -Recurse -Force }
-    Write-Host "已卸载 Windows 客户端：$TaskName"
+    Write-Host "Windows client removed: $TaskName"
 }
 
 function Get-PublicIp {
@@ -76,7 +76,7 @@ function Get-AgentSourcePath {
     $downloadUrl = Get-CacheBustedUrl -RelativePath 'client/windows/agent.ps1'
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempAgent -UseBasicParsing
     if (-not (Test-Path $tempAgent)) {
-        throw "远程下载 agent.ps1 失败：$downloadUrl"
+        throw "Failed to download agent.ps1 from: $downloadUrl"
     }
     return $tempAgent
 }
@@ -92,14 +92,14 @@ if (-not $ServerHost) {
     $defaultServerHost = Get-PublicIp
     if (-not $defaultServerHost) { $defaultServerHost = Get-PrivateIp }
     if (-not $defaultServerHost) { $defaultServerHost = $env:COMPUTERNAME }
-    $ServerHost = Read-Value -Prompt '服务端 IP / 域名（默认自动探测本机 IP）' -Default $defaultServerHost
+    $ServerHost = Read-Value -Prompt 'Server host or IP (default: auto-detect this machine IP)' -Default $defaultServerHost
 }
-if (-not $Token) { $Token = Read-Value -Prompt 'Agent Token' -Default 'change-me-token' }
+if (-not $Token) { $Token = Read-Value -Prompt 'Agent token' -Default 'change-me-token' }
 if (-not $AgentId) { $AgentId = Read-Value -Prompt 'Agent ID' -Default $env:COMPUTERNAME }
-if (-not $Region) { $Region = Read-Value -Prompt '区域（可留空）' }
-if (-not $ISP) { $ISP = Read-Value -Prompt '运营商 / 线路（可留空）' }
+if (-not $Region) { $Region = Read-Value -Prompt 'Region (optional)' }
+if (-not $ISP) { $ISP = Read-Value -Prompt 'ISP / line (optional)' }
 if (-not $Tags -or $Tags.Count -eq 0) {
-    $rawTags = Read-Value -Prompt '标签，逗号分隔（可留空）'
+    $rawTags = Read-Value -Prompt 'Tags, comma separated (optional)'
     if ($rawTags) { $Tags = @($rawTags -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 }
 
@@ -148,11 +148,11 @@ if (-not $NoStart) {
 }
 
 Write-Host ""
-Write-Host "Qcby-Agent Windows 客户端已安装。"
-Write-Host "  服务端上报地址: $serverUrl"
-Write-Host "  安装目录: $InstallDir"
-Write-Host "  计划任务: $TaskName"
-Write-Host "  已配置为后台静默运行、开机自启、无 cmd 闪屏。"
+Write-Host "Qcby-Agent Windows client installed."
+Write-Host "  Report URL: $serverUrl"
+Write-Host "  Install dir: $InstallDir"
+Write-Host "  Scheduled task: $TaskName"
+Write-Host "  Mode: silent background run, auto start on boot, no cmd flash."
 Write-Host ""
-Write-Host "卸载命令："
+Write-Host "Uninstall command:"
 Write-Host "  PowerShell -ExecutionPolicy Bypass -File `"$PSCommandPath`" -TaskName `"$TaskName`" -InstallDir `"$InstallDir`" -Uninstall"
