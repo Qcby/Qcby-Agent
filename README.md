@@ -295,7 +295,7 @@ bash scripts/install-linux-client.sh uninstall
 
 安装时需要填写：
 
-- 服务端 IP / 域名（默认自动探测当前执行机器的公网 IP，失败则回退内网 IP）
+- 服务端 IP / 域名
 - 服务端端口
 - Agent Token
 - Agent ID（可选）

@@ -16,6 +16,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function U {
+    param([string]$Text)
+    return [regex]::Unescape($Text)
+}
+
 function Read-Value {
     param(
         [string]$Prompt,
@@ -30,14 +35,14 @@ function Ensure-Admin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        throw "Please run install.ps1 in an elevated Administrator PowerShell window."
+        throw (U '\u8bf7\u4ee5\u7ba1\u7406\u5458 PowerShell \u7a97\u53e3\u8fd0\u884c install.ps1\u3002')
     }
 }
 
 function Remove-Client {
     try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue | Out-Null } catch {}
     if (Test-Path $InstallDir) { Remove-Item -LiteralPath $InstallDir -Recurse -Force }
-    Write-Host "Windows client removed: $TaskName"
+    Write-Host ((U '\u5df2\u5378\u8f7d Windows \u5ba2\u6237\u7aef\uff1a') + $TaskName)
 }
 
 function Get-PublicIp {
@@ -76,7 +81,7 @@ function Get-AgentSourcePath {
     $downloadUrl = Get-CacheBustedUrl -RelativePath 'client/windows/agent.ps1'
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempAgent -UseBasicParsing
     if (-not (Test-Path $tempAgent)) {
-        throw "Failed to download agent.ps1 from: $downloadUrl"
+        throw ((U '\u8fdc\u7a0b\u4e0b\u8f7d agent.ps1 \u5931\u8d25\uff1a') + $downloadUrl)
     }
     return $tempAgent
 }
@@ -89,17 +94,14 @@ if ($Uninstall) {
 }
 
 if (-not $ServerHost) {
-    $defaultServerHost = Get-PublicIp
-    if (-not $defaultServerHost) { $defaultServerHost = Get-PrivateIp }
-    if (-not $defaultServerHost) { $defaultServerHost = $env:COMPUTERNAME }
-    $ServerHost = Read-Value -Prompt 'Server host or IP (default: auto-detect this machine IP)' -Default $defaultServerHost
+    $ServerHost = Read-Value -Prompt (U '\u670d\u52a1\u7aef IP / \u57df\u540d')
 }
-if (-not $Token) { $Token = Read-Value -Prompt 'Agent token' -Default 'change-me-token' }
-if (-not $AgentId) { $AgentId = Read-Value -Prompt 'Agent ID' -Default $env:COMPUTERNAME }
-if (-not $Region) { $Region = Read-Value -Prompt 'Region (optional)' }
-if (-not $ISP) { $ISP = Read-Value -Prompt 'ISP / line (optional)' }
+if (-not $Token) { $Token = Read-Value -Prompt (U '\u0041\u0067\u0065\u006e\u0074\u0020\u0054\u006f\u006b\u0065\u006e') -Default 'change-me-token' }
+if (-not $AgentId) { $AgentId = Read-Value -Prompt (U '\u0041\u0067\u0065\u006e\u0074\u0020\u0049\u0044') -Default $env:COMPUTERNAME }
+if (-not $Region) { $Region = Read-Value -Prompt (U '\u533a\u57df\uff08\u53ef\u7559\u7a7a\uff09') }
+if (-not $ISP) { $ISP = Read-Value -Prompt (U '\u8fd0\u8425\u5546 / \u7ebf\u8def\uff08\u53ef\u7559\u7a7a\uff09') }
 if (-not $Tags -or $Tags.Count -eq 0) {
-    $rawTags = Read-Value -Prompt 'Tags, comma separated (optional)'
+    $rawTags = Read-Value -Prompt (U '\u6807\u7b7e\uff0c\u9017\u53f7\u5206\u9694\uff08\u53ef\u7559\u7a7a\uff09')
     if ($rawTags) { $Tags = @($rawTags -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 }
 
@@ -148,11 +150,11 @@ if (-not $NoStart) {
 }
 
 Write-Host ""
-Write-Host "Qcby-Agent Windows client installed."
-Write-Host "  Report URL: $serverUrl"
-Write-Host "  Install dir: $InstallDir"
-Write-Host "  Scheduled task: $TaskName"
-Write-Host "  Mode: silent background run, auto start on boot, no cmd flash."
+Write-Host (U '\u0051\u0063\u0062\u0079\u002d\u0041\u0067\u0065\u006e\u0074\u0020\u0057\u0069\u006e\u0064\u006f\u0077\u0073 \u5ba2\u6237\u7aef\u5df2\u5b89\u88c5\u3002')
+Write-Host ((U '  \u670d\u52a1\u7aef\u4e0a\u62a5\u5730\u5740\uff1a') + $serverUrl)
+Write-Host ((U '  \u5b89\u88c5\u76ee\u5f55\uff1a') + $InstallDir)
+Write-Host ((U '  \u8ba1\u5212\u4efb\u52a1\uff1a') + $TaskName)
+Write-Host (U '  \u5df2\u914d\u7f6e\u4e3a\u540e\u53f0\u9759\u9ed8\u8fd0\u884c\u3001\u5f00\u673a\u81ea\u542f\u3001\u65e0 cmd \u95ea\u5c4f\u3002')
 Write-Host ""
-Write-Host "Uninstall command:"
+Write-Host (U '\u5378\u8f7d\u547d\u4ee4\uff1a')
 Write-Host "  PowerShell -ExecutionPolicy Bypass -File `"$PSCommandPath`" -TaskName `"$TaskName`" -InstallDir `"$InstallDir`" -Uninstall"

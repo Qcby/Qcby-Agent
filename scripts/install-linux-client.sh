@@ -162,10 +162,7 @@ install_or_update_client() {
   load_existing_defaults
 
   local default_server_host default_server_port default_token default_agent_id default_interval default_region default_isp default_tags
-  default_server_host="${EXISTING_SERVER_HOST:-$(get_public_ip)}"
-  if [[ -z "$default_server_host" ]]; then
-    default_server_host="$(get_private_ip)"
-  fi
+  default_server_host="${EXISTING_SERVER_HOST:-}"
   default_server_port="${EXISTING_SERVER_PORT:-8080}"
   default_token="${EXISTING_TOKEN:-change-me-token}"
   default_agent_id="${EXISTING_AGENT_ID:-}"
@@ -175,7 +172,7 @@ install_or_update_client() {
   default_tags="${EXISTING_TAGS:-}"
 
   local server_host server_port token agent_id interval_seconds region isp tags server_url
-  server_host="$(read_tty "服务端 IP / 域名（默认自动探测本机 IP）" "${default_server_host:-}")"
+  server_host="$(read_tty "服务端 IP / 域名" "${default_server_host:-}")"
   server_port="$(read_tty "服务端端口" "$default_server_port")"
   token="$(read_tty "Agent Token" "$default_token")"
   agent_id="$(read_tty "节点唯一 ID（留空默认主机名）" "$default_agent_id")"
