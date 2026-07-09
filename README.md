@@ -337,7 +337,7 @@ journalctl -u qcby-agent-client -f
 
 ---
 
-## 六、Windows 客户端一键安装
+## 六、Windows 客户端安装与管理
 
 Windows 侧提供：
 
@@ -353,6 +353,23 @@ client/windows/install.ps1
 Set-ExecutionPolicy Bypass -Scope Process -Force
 PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1
 ```
+
+现在脚本会进入管理菜单，支持：
+
+- 安装/更新
+- 升级/更新
+- 卸载
+- 启动
+- 重启
+- 停止
+- 查看状态
+- 查看日志说明
+- 重新配置
+
+其中：
+
+- **升级/更新**：默认保留已有配置，只更新 agent 文件和计划任务
+- **安装/重新配置**：才会重新询问服务端地址、Token、标签等参数
 
 ### 1.1) 一条命令远程安装
 
@@ -382,7 +399,17 @@ PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 `
   -Tags prod,windows
 ```
 
-### 3) 运行机制说明
+### 3) 直接指定动作
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Action install
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Action upgrade
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Action status
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Action reconfigure
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Uninstall
+```
+
+### 4) 运行机制说明
 
 Windows 安装脚本会：
 
@@ -397,7 +424,7 @@ Windows 安装脚本会：
 - 开机自启
 - 无 cmd 闪屏弹出后又关闭
 
-### 4) 卸载
+### 5) 卸载
 
 ```powershell
 PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Uninstall
