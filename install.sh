@@ -68,8 +68,8 @@ case "${1:-}" in
   *)
     echo "用法:"
     echo "  bash install.sh             # 交互菜单"
-    echo "  bash install.sh server      # 安装 / 升级服务端"
-    echo "  bash install.sh client      # 安装 / 升级 Linux 客户端"
+    echo "  bash install.sh server      # 管理服务端"
+    echo "  bash install.sh client      # 管理 Linux 客户端"
     echo ""
     echo "一键远程安装示例:"
     echo "  bash <(curl -sSL ${RAW_BASE}/install.sh) server"

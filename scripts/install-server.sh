@@ -294,7 +294,7 @@ uninstall_server() {
 show_menu() {
   echo "请选择操作:"
   echo "1) 安装/重新配置"
-  echo "2) 升级/更新"
+  echo "2) 升级"
   echo "3) 卸载"
   echo "4) 启动"
   echo "5) 重启"

@@ -239,8 +239,8 @@ reconfigure_client() {
 
 show_menu() {
   echo "请选择操作:"
-  echo "1) 安装/更新"
-  echo "2) 升级/更新"
+  echo "1) 安装"
+  echo "2) 升级"
   echo "3) 卸载"
   echo "4) 启动"
   echo "5) 重启"
@@ -295,7 +295,7 @@ case "${1:-menu}" in
   *)
     echo "用法:"
     echo "  bash scripts/install-linux-client.sh            # 交互菜单"
-    echo "  bash scripts/install-linux-client.sh install    # 安装/更新"
+    echo "  bash scripts/install-linux-client.sh install    # 安装"
     echo "  bash scripts/install-linux-client.sh uninstall  # 卸载"
     echo "  bash scripts/install-linux-client.sh start      # 启动"
     echo "  bash scripts/install-linux-client.sh restart    # 重启"

@@ -269,8 +269,8 @@ function Show-LogHint {
 
 function Show-Menu {
     Write-Host (U '\u8bf7\u9009\u62e9\u64cd\u4f5c\uff1a')
-    Write-Host (U '1) \u5b89\u88c5/\u66f4\u65b0')
-    Write-Host (U '2) \u5347\u7ea7/\u66f4\u65b0')
+    Write-Host (U '1) \u5b89\u88c5')
+    Write-Host (U '2) \u5347\u7ea7')
     Write-Host (U '3) \u5378\u8f7d')
     Write-Host (U '4) \u542f\u52a8')
     Write-Host (U '5) \u91cd\u542f')

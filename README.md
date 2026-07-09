@@ -219,7 +219,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 执行后会进入服务端管理菜单，支持：
 
 - 安装/重新配置
-- 升级/更新
+- 升级
 - 卸载
 - 启动
 - 重启
@@ -230,7 +230,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 
 其中：
 
-- **升级/更新**：默认保留当前 `.env` 配置，直接拉新镜像并重建容器
+- **升级**：默认保留当前 `.env` 配置，直接拉新镜像并重建容器
 - **安装/重新配置**：才会重新询问端口、Token、管理员账号等配置项
 
 ### 直接命令方式
@@ -295,7 +295,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 
 执行后会进入管理菜单，支持：
 
-- 安装/更新
+- 安装
 - 卸载
 - 启动
 - 重启
@@ -356,8 +356,8 @@ PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1
 
 现在脚本会进入管理菜单，支持：
 
-- 安装/更新
-- 升级/更新
+- 安装
+- 升级
 - 卸载
 - 启动
 - 重启
@@ -368,7 +368,7 @@ PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1
 
 其中：
 
-- **升级/更新**：默认保留已有配置，只更新 agent 文件和计划任务
+- **升级**：默认保留已有配置，只更新 agent 文件和计划任务
 - **安装/重新配置**：才会重新询问服务端地址、Token、标签等参数
 
 ### 1.1) 一条命令远程安装
