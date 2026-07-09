@@ -1,40 +1,39 @@
-# 发布说明
+# Qcby-Agent Release
 
-## 当前版本
+## 发布前检查
 
-v0.1.0
+1. 确认 `README.md` 已同步最新 Git、Docker、多架构与安装说明
+2. 确认 `install.sh`、`scripts/install-server.sh`、`scripts/install-linux-client.sh` 可用
+3. 确认 `client/windows/install.ps1` 可正常注册计划任务并静默运行
+4. 确认后台端口修改提示、Token 修改提示、公网 IP 显示都正常
 
-## 包含内容
-
-- `install.sh`
-  - 单文件 Linux 客户端安装/管理脚本
-  - 内置 agent 内容
-  - 支持安装、更新、卸载、启动、停止、重启、状态、日志、重配置
-
-## 已实现能力
-
-- 自动创建 `/opt/nodepulse`
-- 自动生成 `agent.sh`
-- 自动生成 `agent.env`
-- 自动注册 `nodepulse-agent.service`
-- 自动拼接 `/api/v1/report`
-- 自动上报系统信息、资源信息、网络信息、地理信息
-- 自动生成系统/地区标签
-
-## 适用命令
+## Git 发布
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh)
+git status
+git add .
+git commit -m "release: prepare v1.0.0"
+git tag v1.0.0
+git push origin main
+git push origin v1.0.0
 ```
 
-## 推荐后续版本规划
+## Docker 多架构发布
 
-### v0.2.0
-- 增加非交互参数安装模式
-- 增加 GitHub Release 下载逻辑
-- 增加更丰富的地理中文映射
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t qcby/qcby-agent:latest \
+  -t qcby/qcby-agent:v1.0.0 \
+  --push \
+  ./server
+```
 
-### v0.3.0
-- 增加自动升级
-- 增加 shell 自动补全
-- 增加客户端自检命令
+## 部署后核验
+
+1. 首页可访问
+2. `/admin` 可登录
+3. 设备列表显示公网 IP
+4. 修改设备别名后首页同步显示
+5. 修改 Token 后旧客户端 401
+6. 修改绑定端口后提示用户执行 `manage-server.sh apply`

@@ -1,244 +1,474 @@
-# QcbyTz / NodePulse Linux 客户端一键安装脚本
+# Qcby-Agent
 
-这是一个面向 **NodePulse 探针客户端** 的 Linux 一键安装 / 管理脚本仓库。  
-适合直接放到 GitHub / Gitee / 自建静态站点，通过：
+Qcby-Agent 是一个轻量的 Win / Linux 节点监控项目，提供：
 
-```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh)
-```
+- 公开监控首页
+- `/admin` 登录后台
+- Windows / Linux 客户端探针
+- Docker 化服务端部署
+- 设备公网 IP、地理信息、在线状态、资源指标展示
+- 后台修改 Agent Token、绑定端口、设备展示名
 
-一键进入安装和管理菜单。
-
----
-
-## 功能特性
-
-- 一键安装 NodePulse Linux 客户端
-- 自动注册为 `systemd` 服务
-- 支持升级 / 更新
-- 支持卸载
-- 支持启动 / 停止 / 重启
-- 支持查看状态 / 查看日志
-- 支持重新配置服务端地址、Token、标签、上报间隔
-- 自动拼接 `/api/v1/report`
-- 自动识别：
-  - 公网 IP
-  - 国家 / 城市 / ISP
-  - Linux 发行版标签（如 `ubuntu22`、`debian12`、`centos7`）
-- 自动生成标签：
-  - `linux`
-  - `ubuntu22` / `debian12` / `centos7`
-  - `cn` / `kr` / `sg`
-  - 地理位置标签
+> 仓库原名为 `QcbyTz`。如果你看到旧地址，GitHub 会自动重定向到新的 `Qcby-Agent` 仓库地址。
 
 ---
 
-## 适用场景
-
-适合给以下类型机器快速接入 NodePulse 服务端：
-
-- Debian / Ubuntu
-- CentOS / Rocky / AlmaLinux
-- 云服务器 / VPS
-- 家用 Linux 主机
-- 宝塔所在 Linux 服务器
-
----
-
-## 使用方式
-
-### 1. 直接运行菜单版
-
-```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh)
-```
-
-运行后会出现菜单：
+## 目录结构
 
 ```text
-=== NodePulse Linux 客户端管理脚本 ===
-请选择操作:
-  1) 安装
-  2) 升级/更新
-  3) 卸载
-  4) 启动
-  5) 重启
-  6) 停止
-  7) 查看状态
-  8) 查看日志
-  9) 重新配置
-  0) 退出
+server/                  服务端 Flask + 前端模板
+client/linux/            Linux agent 与相关脚本
+client/windows/          Windows agent 与一键安装脚本
+scripts/install-server.sh        Linux 服务端安装器
+scripts/install-linux-client.sh  Linux 客户端安装器
+install.sh               统一安装入口
 ```
 
 ---
 
-### 2. 直接执行某个动作
+## 一、Git 使用说明
 
-#### 安装
+### 1) 克隆仓库
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) install
+git clone https://github.com/Qcby/Qcby-Agent.git
+cd Qcby-Agent
 ```
 
-#### 更新
+如果你本地还在使用旧地址：
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) update
+git clone https://github.com/Qcby/QcbyTz.git
 ```
 
-#### 卸载
+GitHub 也会自动跳转到新仓库。
+
+### 2) 常用开发流程
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) uninstall
+git checkout -b feature/your-change
+git status
+git add .
+git commit -m "feat: describe your change"
+git push origin feature/your-change
 ```
 
-#### 启动 / 停止 / 重启
+拉取最新代码：
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) start
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) stop
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) restart
+git pull --rebase origin main
 ```
 
-#### 查看状态 / 日志
+### 3) 推荐发布标签
+
+建议按语义版本发布：
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) status
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) logs
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-#### 重新配置
+推荐同时维护：
+
+- `main`
+- `v1.0.0`、`v1.0.1` 这类版本标签
+
+---
+
+## 二、服务端本地开发
+
+### 1) 安装依赖
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Qcby/QcbyTz/main/install.sh) reconfig
+cd server
+python -m pip install -r requirements.txt
+```
+
+### 2) 运行
+
+```bash
+python app.py
+```
+
+默认地址：
+
+- 首页：`http://127.0.0.1:8080/`
+- 后台登录：`http://127.0.0.1:8080/admin`
+- 上报接口：`http://127.0.0.1:8080/api/v1/report`
+
+默认 bootstrap 管理员（仅首次无数据库时生效）：
+
+- 用户名：`admin`
+- 密码：`change-me-admin-password`
+
+---
+
+## 三、Docker 说明
+
+### 1) 本地构建镜像
+
+在仓库根目录执行：
+
+```bash
+docker build -t qcby/qcby-agent:local ./server
+```
+
+### 2) 本地运行（docker run）
+
+```bash
+docker run -d \
+  --name qcby-agent \
+  -p 8080:8080 \
+  -e ONLINE_SECONDS=90 \
+  -e RETENTION_DAYS=30 \
+  -e AGENT_TOKEN=change-me-token \
+  -e BOOTSTRAP_ADMIN_USERNAME=admin \
+  -e BOOTSTRAP_ADMIN_PASSWORD=change-me-admin-password \
+  -e BIND_PORT=8080 \
+  -v "$(pwd)/server/data:/app/data" \
+  qcby/qcby-agent:local
+```
+
+### 3) 本地运行（docker compose）
+
+```bash
+cd server
+docker compose up -d --build
+```
+
+### 4) 多架构 buildx 构建与推送
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t qcby/qcby-agent:latest \
+  -t qcby/qcby-agent:v1.0.0 \
+  --push \
+  ./server
+```
+
+如果你只想先验证本地构建：
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  -t qcby/qcby-agent:test \
+  --load \
+  ./server
+```
+
+### 5) 发布策略
+
+建议每次发布至少推送两个标签：
+
+- `qcby/qcby-agent:latest`
+- `qcby/qcby-agent:v1.0.0`
+
+### 6) 数据卷与持久化
+
+SQLite 默认保存在：
+
+```text
+server/data/monitor.db
+```
+
+Docker 部署时请务必挂载：
+
+```text
+./data:/app/data
+```
+
+### 7) 默认端口与环境变量
+
+容器内监听端口固定：
+
+```text
+8080
+```
+
+常用环境变量：
+
+- `ONLINE_SECONDS`：在线判定秒数
+- `RETENTION_DAYS`：历史保留天数
+- `AGENT_TOKEN`：客户端上报 Token
+- `BOOTSTRAP_ADMIN_USERNAME`：首次初始化后台管理员账号
+- `BOOTSTRAP_ADMIN_PASSWORD`：首次初始化后台管理员密码
+- `APP_SECRET_KEY`：Flask Session Secret
+- `BIND_PORT`：当前对外绑定端口（用于后台显示与安装脚本）
+- `HOST_ENV_FILE`：后台修改端口时写入的宿主机 `.env` 路径
+- `HOST_APPLY_COMMAND`：后台提示用户执行的应用命令
+
+### 8) 更新镜像后的升级步骤
+
+如果是安装脚本部署的服务端：
+
+```bash
+cd /opt/qcby-agent
+./manage-server.sh pull
+./manage-server.sh restart
+```
+
+如果是手工 compose：
+
+```bash
+docker compose pull
+docker compose up -d --force-recreate
+```
+
+### 9) 后台修改绑定端口的影响
+
+后台允许修改“绑定端口”，但请注意：
+
+1. 这只会保存新的目标端口配置
+2. 你需要在宿主机重新应用 Docker 端口映射
+3. 旧客户端会因为上报地址没同步而失联
+
+安装脚本部署的默认应用命令：
+
+```bash
+cd /opt/qcby-agent
+./manage-server.sh apply
+```
+
+### 10) 多架构兼容说明
+
+官方发布镜像目标架构：
+
+- `linux/amd64`
+- `linux/arm64`
+
+适用于常见：
+
+- x86_64 云服务器
+- ARM64 VPS / ARM 云主机
+
+---
+
+## 四、Linux 服务端一键安装
+
+在仓库根目录执行：
+
+```bash
+bash install.sh
+```
+
+或直接：
+
+```bash
+bash install.sh server
+```
+
+安装器会提示你输入：
+
+- Docker 镜像标签
+- 绑定端口
+- Agent Token
+- 后台管理员账号
+- 后台管理员密码
+- 在线判定秒数
+- 历史保留天数
+
+默认安装目录：
+
+```text
+/opt/qcby-agent
+```
+
+安装完成后常用命令：
+
+```bash
+cd /opt/qcby-agent
+./manage-server.sh apply
+./manage-server.sh logs
+./manage-server.sh restart
+./manage-server.sh down
 ```
 
 ---
 
-## 安装时需要提供的信息
+## 五、Linux 客户端安装
 
-脚本会交互询问：
+### 方式 1：统一入口
 
-- 服务端 IP 或域名
+```bash
+bash install.sh client
+```
+
+### 方式 2：直接脚本
+
+```bash
+bash scripts/install-linux-client.sh
+```
+
+安装时需要填写：
+
+- 服务端 IP / 域名
 - 服务端端口
-- Token
-- 上报间隔秒数
-- 地区覆盖（可留空）
-- ISP 覆盖（可留空）
-- 额外标签
+- Agent Token
+- Agent ID（可选）
+- 区域 / ISP / 标签（可选）
 
-例如：
-
-```text
-服务端地址: 146.56.140.150
-端口: 8080
-Token: change-me-token
-```
-
-脚本会自动拼接成：
-
-```text
-http://146.56.140.150:8080/api/v1/report
-```
-
----
-
-## 安装后的目录结构
-
-默认安装到：
-
-```text
-/opt/nodepulse
-```
-
-包含：
-
-- `/opt/nodepulse/agent.sh`：客户端主脚本
-- `/opt/nodepulse/agent.env`：配置文件
-- `/etc/systemd/system/nodepulse-agent.service`：systemd 服务
-
----
-
-## 常用命令
-
-### 查看状态
+安装完成后会注册 systemd 服务：
 
 ```bash
-systemctl status nodepulse-agent
-```
-
-### 查看日志
-
-```bash
-journalctl -u nodepulse-agent -f
-```
-
-### 重启客户端
-
-```bash
-systemctl restart nodepulse-agent
+systemctl status qcby-agent-client
+journalctl -u qcby-agent-client -f
 ```
 
 ---
 
-## 仓库使用介绍
+## 六、Windows 客户端一键安装
 
-这个仓库的定位不是完整服务端，而是：
-
-### 一个可以被任何 Linux 主机远程执行的一键安装入口
-
-你可以把它理解为：
-
-- 像 `code-server` / `vscode` 那类安装脚本一样
-- 用户只需要 `curl | bash`
-- 不需要提前手动上传 `agent.sh`
-- 不需要手动写 `systemd`
-- 不需要手动拼接 `/api/v1/report`
-
-### 适合搭配 NodePulse 服务端使用
-
-推荐流程：
-
-1. 先部署 NodePulse 服务端
-2. 再通过本仓库的一键安装脚本接入多台 Linux 客户端
-3. 统一在服务端面板中查看节点状态、在线时间、系统标签、地理位置等信息
-
----
-
-## 默认值
-
-脚本默认：
-
-- Token：`change-me-token`
-- 上报间隔：`15` 秒
-
-但安装时都可以手动改。
-
----
-
-## 注意事项
-
-- 请确保服务端端口可达
-- 请确保 Linux 主机能访问外网（用于 IP 地理识别）
-- 推荐使用 root 运行，或具备 sudo 权限的用户运行
-- 如果只想本机调试，也可以把服务端填为：
+Windows 侧提供：
 
 ```text
-127.0.0.1:8080
+client/windows/install.ps1
+```
+
+### 1) 交互式安装
+
+以管理员 PowerShell 运行：
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1
+```
+
+### 2) 直接传参安装
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 `
+  -ServerHost "146.56.140.150" `
+  -Port 8080 `
+  -Token "change-me-token" `
+  -AgentId "win-node-01" `
+  -IntervalSeconds 30 `
+  -Region "HK" `
+  -ISP "CMI" `
+  -Tags prod,windows
+```
+
+### 3) 运行机制说明
+
+Windows 安装脚本会：
+
+- 复制 `agent.ps1` 到系统安装目录
+- 生成配置文件与启动脚本
+- 注册计划任务为 **SYSTEM 开机自启**
+- 以 **PowerShell Hidden Window** 方式后台运行
+
+因此效果是：
+
+- 无窗口后台静默
+- 开机自启
+- 无 cmd 闪屏弹出后又关闭
+
+### 4) 卸载
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\client\windows\install.ps1 -Uninstall
 ```
 
 ---
 
-## 后续可扩展方向
+## 七、后台功能说明
 
-- 自动更新 agent
-- 多环境模板配置
-- IPv6 优先 / IPv4 优先切换
-- 更丰富的地区中文映射
-- 与 GitHub Release / Gitee Release 联动
+后台地址：
+
+```text
+http://你的服务端IP:端口/admin
+```
+
+当前支持：
+
+- 登录记忆 30 天
+- 退出登录
+- 修改 Agent Token
+- 修改 Docker 绑定端口
+- 修改设备展示名（后台别名）
+- 查看设备公网 IP
+
+### 设备改名规则
+
+- 只改后台展示名 `display_name`
+- 不修改 `agent_id`
+- 不覆盖原始 `hostname`
+
+### Token 修改规则
+
+修改 Token 后：
+
+- 服务端会立即使用新的 Token 校验
+- 所有旧客户端如果不更新 Token，将无法继续上报
+
+### 端口修改规则
+
+修改端口后：
+
+- 服务端会记录新的目标端口
+- 你仍需在宿主机重新应用 Docker 映射
+- 旧客户端因上报地址未同步会失联
 
 ---
 
-## 仓库地址
+## 八、客户端参数与上报地址
 
-- GitHub: [Qcby/QcbyTz](https://github.com/Qcby/QcbyTz)
+客户端最终上报地址格式：
+
+```text
+http://你的服务端IP:端口/api/v1/report
+```
+
+如果你修改了：
+
+- `Agent Token`
+- 服务端绑定端口
+
+都需要同步更新客户端配置。
+
+---
+
+## 九、常用 API
+
+### 公开接口
+
+- `GET /api/v1/dashboard`
+- `GET /api/v1/agents`
+- `GET /api/v1/agents/<agent_id>`
+- `GET /api/v1/agents/<agent_id>/metrics`
+- `POST /api/v1/report`
+
+### 后台接口（需登录）
+
+- `GET /api/v1/admin/settings`
+- `PUT /api/v1/admin/settings`
+- `GET /api/v1/admin/agents`
+- `PATCH /api/v1/admin/agents/<agent_id>`
+
+---
+
+## 十、建议发布流程
+
+```bash
+git pull --rebase origin main
+git tag v1.0.0
+git push origin main
+git push origin v1.0.0
+
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t qcby/qcby-agent:latest \
+  -t qcby/qcby-agent:v1.0.0 \
+  --push \
+  ./server
+```
+
+---
+
+## 十一、生产使用建议
+
+- 修改默认后台账号密码
+- 修改默认 Agent Token
+- 定期备份 `monitor.db`
+- 使用 HTTPS / 反向代理
+- 修改端口前先准备好客户端批量更新方案
