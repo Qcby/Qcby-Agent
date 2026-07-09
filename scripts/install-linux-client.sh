@@ -8,6 +8,7 @@ CONFIG_FILE="${INSTALL_DIR}/agent.env"
 AGENT_FILE="${INSTALL_DIR}/agent.sh"
 SYSTEMD_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 RAW_BASE="${QCBY_AGENT_RAW_BASE:-https://raw.githubusercontent.com/Qcby/Qcby-Agent/main}"
+CACHE_BUSTER="${QCBY_AGENT_CACHE_BUSTER:-$(date +%s)}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SOURCE_AGENT="${REPO_DIR}/client/linux/agent.sh"
@@ -25,11 +26,11 @@ need_cmd() { command -v "$1" >/dev/null 2>&1 || fail "缺少命令: $1"; }
 download_agent() {
   local target="$1"
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "${RAW_BASE}/client/linux/agent.sh" -o "$target"
+    curl -fsSL "${RAW_BASE}/client/linux/agent.sh?t=${CACHE_BUSTER}" -o "$target"
     return
   fi
   if command -v wget >/dev/null 2>&1; then
-    wget -qO "$target" "${RAW_BASE}/client/linux/agent.sh"
+    wget -qO "$target" "${RAW_BASE}/client/linux/agent.sh?t=${CACHE_BUSTER}"
     return
   fi
   fail "缺少 curl 或 wget，无法远程下载 Linux agent。"

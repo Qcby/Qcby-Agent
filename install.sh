@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RAW_BASE="${QCBY_AGENT_RAW_BASE:-https://raw.githubusercontent.com/Qcby/Qcby-Agent/main}"
+CACHE_BUSTER="${QCBY_AGENT_CACHE_BUSTER:-$(date +%s)}"
 
 run_remote_script() {
   local relative_path="$1"
@@ -10,15 +11,15 @@ run_remote_script() {
   local status
   temp_file="$(mktemp)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "${RAW_BASE}/${relative_path}" -o "$temp_file"
+    curl -fsSL "${RAW_BASE}/${relative_path}?t=${CACHE_BUSTER}" -o "$temp_file"
   elif command -v wget >/dev/null 2>&1; then
-    wget -qO "$temp_file" "${RAW_BASE}/${relative_path}"
+    wget -qO "$temp_file" "${RAW_BASE}/${relative_path}?t=${CACHE_BUSTER}"
   else
     rm -f "$temp_file"
     echo "缺少 curl 或 wget，无法远程下载安装脚本。" >&2
     exit 1
   fi
-  bash "$temp_file"
+  QCBY_AGENT_RAW_BASE="${RAW_BASE}" QCBY_AGENT_CACHE_BUSTER="${CACHE_BUSTER}" bash "$temp_file"
   status=$?
   rm -f "$temp_file"
   return $status
