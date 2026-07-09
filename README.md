@@ -258,6 +258,12 @@ bash install.sh
 bash install.sh server
 ```
 
+也支持短命令远程执行：
+
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh) server
+```
+
 安装器会提示你输入：
 
 - Docker 镜像标签
@@ -292,6 +298,12 @@ cd /opt/qcby-agent
 
 ```bash
 bash install.sh client
+```
+
+也支持短命令远程执行：
+
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh) client
 ```
 
 ### 方式 2：直接脚本

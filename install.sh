@@ -2,13 +2,38 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RAW_BASE="${QCBY_AGENT_RAW_BASE:-https://raw.githubusercontent.com/Qcby/Qcby-Agent/main}"
+
+run_remote_script() {
+  local relative_path="$1"
+  local temp_file
+  temp_file="$(mktemp)"
+  trap 'rm -f "$temp_file"' RETURN
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "${RAW_BASE}/${relative_path}" -o "$temp_file"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$temp_file" "${RAW_BASE}/${relative_path}"
+  else
+    echo "缺少 curl 或 wget，无法远程下载安装脚本。" >&2
+    exit 1
+  fi
+  bash "$temp_file"
+}
 
 run_server() {
-  bash "${SCRIPT_DIR}/scripts/install-server.sh"
+  if [[ -f "${SCRIPT_DIR}/scripts/install-server.sh" ]]; then
+    bash "${SCRIPT_DIR}/scripts/install-server.sh"
+  else
+    run_remote_script "scripts/install-server.sh"
+  fi
 }
 
 run_linux_client() {
-  bash "${SCRIPT_DIR}/scripts/install-linux-client.sh"
+  if [[ -f "${SCRIPT_DIR}/scripts/install-linux-client.sh" ]]; then
+    bash "${SCRIPT_DIR}/scripts/install-linux-client.sh"
+  else
+    run_remote_script "scripts/install-linux-client.sh"
+  fi
 }
 
 show_menu() {
@@ -40,6 +65,10 @@ case "${1:-}" in
     echo "  bash install.sh             # 交互菜单"
     echo "  bash install.sh server      # 安装 / 升级服务端"
     echo "  bash install.sh client      # 安装 / 升级 Linux 客户端"
+    echo ""
+    echo "一键远程安装示例:"
+    echo "  bash <(curl -sSL ${RAW_BASE}/install.sh) server"
+    echo "  bash <(curl -sSL ${RAW_BASE}/install.sh) client"
     exit 1
     ;;
 esac
