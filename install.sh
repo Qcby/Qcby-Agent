@@ -7,17 +7,21 @@ RAW_BASE="${QCBY_AGENT_RAW_BASE:-https://raw.githubusercontent.com/Qcby/Qcby-Age
 run_remote_script() {
   local relative_path="$1"
   local temp_file
+  local status
   temp_file="$(mktemp)"
-  trap 'rm -f "$temp_file"' RETURN
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL "${RAW_BASE}/${relative_path}" -o "$temp_file"
   elif command -v wget >/dev/null 2>&1; then
     wget -qO "$temp_file" "${RAW_BASE}/${relative_path}"
   else
+    rm -f "$temp_file"
     echo "缺少 curl 或 wget，无法远程下载安装脚本。" >&2
     exit 1
   fi
   bash "$temp_file"
+  status=$?
+  rm -f "$temp_file"
+  return $status
 }
 
 run_server() {

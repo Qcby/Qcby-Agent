@@ -55,6 +55,28 @@ read_tty() {
   printf '%s' "$answer"
 }
 
+get_private_ip() {
+  hostname -I 2>/dev/null | awk '{print $1}' || true
+}
+
+get_public_ip() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsS --max-time 8 https://api4.ipify.org 2>/dev/null \
+      || curl -fsS --max-time 8 https://api.ip.sb/ip 2>/dev/null \
+      || curl -fsS --max-time 8 https://api.ipify.org 2>/dev/null \
+      || true
+    return
+  fi
+  if command -v wget >/dev/null 2>&1; then
+    wget -qO- --timeout=8 https://api4.ipify.org 2>/dev/null \
+      || wget -qO- --timeout=8 https://api.ip.sb/ip 2>/dev/null \
+      || wget -qO- --timeout=8 https://api.ipify.org 2>/dev/null \
+      || true
+    return
+  fi
+  true
+}
+
 ensure_existing_defaults() {
   if [[ -f "$ENV_FILE" ]]; then
     set -a
@@ -173,11 +195,18 @@ main() {
   $COMPOSE_BIN --env-file "$ENV_FILE" pull || true
   $COMPOSE_BIN --env-file "$ENV_FILE" up -d --remove-orphans
 
+  PRIVATE_IP="$(get_private_ip)"
+  PUBLIC_IP="$(get_public_ip)"
+
   say ""
   say "${APP_NAME} 服务端已部署完成："
   say "  安装目录: ${INSTALL_DIR}"
-  say "  面板首页: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '你的服务器IP'):${BIND_PORT}/"
-  say "  管理后台: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '你的服务器IP'):${BIND_PORT}/admin"
+  say "  面板首页(内网): http://${PRIVATE_IP:-你的服务器IP}:${BIND_PORT}/"
+  say "  管理后台(内网): http://${PRIVATE_IP:-你的服务器IP}:${BIND_PORT}/admin"
+  if [[ -n "${PUBLIC_IP:-}" ]]; then
+    say "  面板首页(公网): http://${PUBLIC_IP}:${BIND_PORT}/"
+    say "  管理后台(公网): http://${PUBLIC_IP}:${BIND_PORT}/admin"
+  fi
   say "  管理命令: ${MANAGE_SCRIPT} [apply|pull|restart|logs|down]"
   say ""
   say "注意：如果你后续在后台修改绑定端口，旧客户端会失联，需要同步更新客户端上报地址；修改后请执行："
