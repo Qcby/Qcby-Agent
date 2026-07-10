@@ -1,12 +1,16 @@
 # Qcby-Agent
 
-Qcby-Agent 是一个轻量的 Win / Linux 节点监控项目，提供公开监控首页、`/admin` 管理后台、Windows / Linux 客户端探针，以及 Docker 化服务端部署。
+> 轻量的 Win / Linux 节点监控与探针管理面板
+
+[GitHub](https://github.com/Qcby/Qcby-Agent) · [Docker Hub](https://hub.docker.com/r/qcby/qcby-agent)
+
+Qcby-Agent 提供公开监控首页、`/admin` 管理后台、Windows / Linux 客户端探针，以及 Docker 化服务端部署。适合 VPS、家用主机、混合节点统一监控。
 
 ---
 
-## 一行命令安装
+## 快速安装
 
-### 服务端
+### 1) 服务端
 
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh)
@@ -18,7 +22,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 1) 管理服务端
 ```
 
-### Linux 客户端
+### 2) Linux 客户端
 
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.sh)
@@ -30,7 +34,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 2) 管理 Linux 客户端
 ```
 
-### Windows 客户端
+### 3) Windows 客户端
 
 以管理员 PowerShell 运行：
 
@@ -42,37 +46,55 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 
 ## 探针功能
 
-Qcby-Agent 探针支持：
+### 节点采集
 
-- 采集 CPU、内存、磁盘、进程数
-- 采集网络上下行速率
-- 采集 Docker 运行状态与容器数量
-- 采集公网 IP、地区、运营商信息
-- 上报在线时长
-- 支持 Linux / Windows
-- 支持后台静默运行与开机自启
+- CPU、内存、磁盘、进程数
+- 网络上下行速率
+- Docker 运行状态与容器数量
+- 在线时长统计
+
+### 节点识别
+
+- 公网 IP
+- 地区 / 城市 / 运营商
+- 自定义标签
+- Windows / Linux 混合接入
+
+### 运行方式
+
+- Linux 后台常驻
+- Windows 静默后台运行
+- 开机自启
+- 支持安装、升级、卸载、重配
 
 ---
 
-## 管理后台功能
+## 后台功能
 
-后台支持：
-
+- 公开首页总览
+- `/admin` 登录后台
 - 登录记忆与退出登录
 - 修改 Agent Token
 - 修改 Docker 绑定端口
 - 修改设备展示名
 - 查看设备公网 IP
-- 节点资源状态总览
 
 ---
 
-## 页面截图预留
+## 页面截图
 
-> 在这里粘贴你的页面截图
+> 这里预留给你粘贴后台页面 / 首页截图
 
 ```md
 ![Qcby-Agent 页面截图](在这里替换成你的图片链接)
+```
+
+如果你后面要放多张图，也可以直接按下面格式继续加：
+
+```md
+![首页总览](这里替换图片链接)
+![后台管理](这里替换图片链接)
+![安装菜单](这里替换图片链接)
 ```
 
 ---
