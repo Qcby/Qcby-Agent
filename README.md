@@ -85,18 +85,10 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 > 这里预留给你粘贴后台页面 / 首页截图
 
 ```md
-![Qcby-Agent 页面截图](在这里替换成你的图片链接)
+![Qcby-Agent 页面截图]<img width="1803" height="886" alt="728d3a04-4b68-43d3-a06b-fefe9ab21cb5" src="https://github.com/user-attachments/assets/dc12cded-9699-497a-9db8-5e37485ac6f1" />
+![后台管理]<img width="1803" height="886" alt="image" src="https://github.com/user-attachments/assets/a4d82dea-6831-4c7b-861e-e9c653d779d8" />
 ```
 
-如果你后面要放多张图，也可以直接按下面格式继续加：
-
-```md
-![首页总览](<img width="1803" height="886" alt="728d3a04-4b68-43d3-a06b-fefe9ab21cb5" src="https://github.com/user-attachments/assets/dc12cded-9699-497a-9db8-5e37485ac6f1" />
-)
-![后台管理](<img width="1803" height="886" alt="image" src="https://github.com/user-attachments/assets/a4d82dea-6831-4c7b-861e-e9c653d779d8" />
-)
-
-```
 
 ---
 
