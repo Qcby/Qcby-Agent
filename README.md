@@ -73,7 +73,6 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 
 - 公开首页总览
 - `/admin` 登录后台
-- 登录记忆与退出登录
 - 修改 Agent Token
 - 修改 Docker 绑定端口
 - 修改设备展示名
@@ -92,9 +91,11 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 如果你后面要放多张图，也可以直接按下面格式继续加：
 
 ```md
-![首页总览](这里替换图片链接)
-![后台管理](这里替换图片链接)
-![安装菜单](这里替换图片链接)
+![首页总览](<img width="1803" height="886" alt="728d3a04-4b68-43d3-a06b-fefe9ab21cb5" src="https://github.com/user-attachments/assets/dc12cded-9699-497a-9db8-5e37485ac6f1" />
+)
+![后台管理](<img width="1803" height="886" alt="image" src="https://github.com/user-attachments/assets/a4d82dea-6831-4c7b-861e-e9c653d779d8" />
+)
+
 ```
 
 ---
