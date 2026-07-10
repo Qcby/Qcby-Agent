@@ -43,6 +43,7 @@ function Ensure-Admin {
 function Get-ConfigFilePath { Join-Path $InstallDir 'agent-config.ps1' }
 function Get-AgentFilePath { Join-Path $InstallDir 'agent.ps1' }
 function Get-RunnerFilePath { Join-Path $InstallDir 'run-agent.ps1' }
+function Get-LogFilePath { Join-Path $InstallDir 'agent.log' }
 
 function Read-ExistingConfig {
     $configPath = Get-ConfigFilePath
@@ -134,7 +135,7 @@ function Ensure-AgentFiles {
     $runnerContent = @"
 `$ErrorActionPreference = 'Stop'
 . `"$configFile`"
-& `"$agentFile`" @AgentConfig
+& `"$agentFile`" @AgentConfig -LogPath `"$(Get-LogFilePath)`"
 "@
     Set-Content -Encoding UTF8 -Path $runnerFile -Value $runnerContent
 }
@@ -228,7 +229,6 @@ function Start-Agent {
         throw (U '\u672a\u68c0\u6d4b\u5230\u5df2\u5b89\u88c5\u7684 Windows \u5ba2\u6237\u7aef\uff0c\u8bf7\u5148\u5b89\u88c5\u3002')
     }
     Start-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue | Out-Null
-    Start-Process -FilePath 'PowerShell.exe' -ArgumentList "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runnerFile`"" -WindowStyle Hidden
     Write-Host (U '\u5ba2\u6237\u7aef\u5df2\u542f\u52a8\u3002')
 }
 
@@ -252,20 +252,38 @@ function Show-Status {
         return
     }
     $info = Get-ScheduledTaskInfo -TaskName $TaskName
+    $stateText = switch ([string]$task.State) {
+        'Running' { U '\u6b63\u5728\u8fd0\u884c' }
+        'Ready' { U '\u5c31\u7eea' }
+        'Disabled' { U '\u5df2\u7981\u7528' }
+        'Queued' { U '\u6392\u961f\u4e2d' }
+        default { [string]$task.State }
+    }
     Write-Host ((U '\u8ba1\u5212\u4efb\u52a1\uff1a') + " $TaskName")
-    Write-Host ((U '\u4efb\u52a1\u72b6\u6001\uff1a') + " $($task.State)")
+    Write-Host ((U '\u4efb\u52a1\u72b6\u6001\uff1a') + " $stateText")
     Write-Host ((U '\u4e0a\u6b21\u8fd0\u884c\uff1a') + " $($info.LastRunTime)")
-    Write-Host ((U '\u4e0a\u6b21\u7ed3\u679c\uff1a') + " $($info.LastTaskResult)")
+    $resultText = switch ([int]$info.LastTaskResult) {
+        0 { U '\u8fd0\u884c\u6210\u529f' }
+        267009 { U '\u6b63\u5728\u8fd0\u884c\uff08\u6b63\u5e38\uff09' }
+        267011 { U '\u5c1a\u672a\u8fd0\u884c' }
+        default { "0x{0:X8}" -f [int]$info.LastTaskResult }
+    }
+    Write-Host ((U '\u4e0a\u6b21\u7ed3\u679c\uff1a') + " $resultText")
     if (Test-Path (Get-ConfigFilePath)) {
         . (Get-ConfigFilePath)
         Write-Host ((U '\u4e0a\u62a5\u5730\u5740\uff1a') + " $($AgentConfig.ServerUrl)")
     }
 }
 
-function Show-LogHint {
-    Write-Host (U '\u5f53\u524d Windows \u5ba2\u6237\u7aef\u4e3a\u540e\u53f0\u9759\u9ed8\u8fd0\u884c\u3002')
-    Write-Host (U '\u5982\u9700\u6392\u67e5\uff0c\u8bf7\u624b\u52a8\u6267\u884c\uff1a')
-    Write-Host "  PowerShell -ExecutionPolicy Bypass -File `"$((Get-AgentFilePath))`" -ServerUrl `"<your-url>`" -Token `"<your-token>`""
+function Show-Logs {
+    $logFile = Get-LogFilePath
+    if (-not (Test-Path $logFile)) {
+        Write-Host (U '\u6682\u65e0\u8fd0\u884c\u65e5\u5fd7\uff0c\u8bf7\u5148\u542f\u52a8\u5ba2\u6237\u7aef\u3002')
+        return
+    }
+    Write-Host ((U '\u65e5\u5fd7\u6587\u4ef6\uff1a') + " $logFile")
+    Write-Host (U '\u6700\u8fd1 30 \u6761\u65e5\u5fd7\uff1a')
+    Get-Content -LiteralPath $logFile -Encoding UTF8 -Tail 30
 }
 
 function Show-Menu {
@@ -277,7 +295,7 @@ function Show-Menu {
     Write-Host (U '5) \u91cd\u542f')
     Write-Host (U '6) \u505c\u6b62')
     Write-Host (U '7) \u67e5\u770b\u72b6\u6001')
-    Write-Host (U '8) \u67e5\u770b\u65e5\u5fd7\u8bf4\u660e')
+    Write-Host (U '8) \u67e5\u770b\u65e5\u5fd7')
     Write-Host (U '9) \u91cd\u65b0\u914d\u7f6e')
     Write-Host (U '0) \u9000\u51fa')
     $choice = Read-Host (U '\u8f93\u5165\u6570\u5b57')
@@ -289,7 +307,7 @@ function Show-Menu {
         '5' { Restart-Agent }
         '6' { Stop-Agent }
         '7' { Show-Status }
-        '8' { Show-LogHint }
+        '8' { Show-Logs }
         '9' { Install-OrReconfigure }
         '0' { return }
         default { throw (U '\u65e0\u6548\u9009\u62e9\u3002') }
@@ -312,7 +330,7 @@ switch ($Action.ToLowerInvariant()) {
     'restart' { Restart-Agent; exit 0 }
     'stop' { Stop-Agent; exit 0 }
     'status' { Show-Status; exit 0 }
-    'logs' { Show-LogHint; exit 0 }
+    'logs' { Show-Logs; exit 0 }
     'reconfigure' { Install-OrReconfigure; exit 0 }
     '' { Show-Menu; exit 0 }
     default { throw ((U '\u672a\u77e5\u64cd\u4f5c\uff1a') + " $Action") }

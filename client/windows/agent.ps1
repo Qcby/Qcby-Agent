@@ -1,14 +1,41 @@
 param(
-    [string]$ServerUrl = "http://146.56.140.150:8080/api/v1/report",
+    [string]$ServerUrl = "",
     [string]$AgentId = $env:COMPUTERNAME,
     [int]$IntervalSeconds = 15,
     [string]$Token = "change-me-token",
     [string]$Region = "",
     [string]$ISP = "",
-    [string[]]$Tags = @()
+    [string[]]$Tags = @(),
+    [string]$LogPath = "$env:ProgramData\Qcby-Agent\agent.log",
+    [switch]$RunOnce
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Write-AgentLog {
+    param(
+        [ValidateSet('INFO', 'WARN', 'ERROR')]
+        [string]$Level,
+        [string]$Message
+    )
+    $line = "[$(Get-Date -Format s)] [$Level] $Message"
+    if ($Level -eq 'WARN') { Write-Warning $Message }
+    elseif ($Level -eq 'ERROR') { Write-Error $Message -ErrorAction Continue }
+    else { Write-Host $line }
+
+    if ([string]::IsNullOrWhiteSpace($LogPath)) { return }
+    try {
+        $logDirectory = Split-Path -Parent $LogPath
+        if ($logDirectory) { New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null }
+        if ((Test-Path $LogPath) -and (Get-Item $LogPath).Length -gt 2MB) {
+            Move-Item -LiteralPath $LogPath -Destination "$LogPath.old" -Force
+        }
+        Add-Content -LiteralPath $LogPath -Value $line -Encoding UTF8
+    }
+    catch {
+        # Logging must never stop metric reporting.
+    }
+}
 function Get-StringValue {
     param(
         $Primary,
@@ -195,10 +222,40 @@ function Get-DockerStats {
 }
 
 function Get-NetworkSnapshot {
-    $stats = Get-NetAdapterStatistics | Where-Object { $_.ReceivedBytes -ge 0 -and $_.SentBytes -ge 0 }
-    $rx = ($stats | Measure-Object -Property ReceivedBytes -Sum).Sum
-    $tx = ($stats | Measure-Object -Property SentBytes -Sum).Sum
-    return [ordered]@{ rx = [double]$rx; tx = [double]$tx; ts = Get-Date }
+    try {
+        $stats = Get-NetAdapterStatistics -ErrorAction Stop |
+            Where-Object { $_.ReceivedBytes -ge 0 -and $_.SentBytes -ge 0 }
+        $rx = ($stats | Measure-Object -Property ReceivedBytes -Sum).Sum
+        $tx = ($stats | Measure-Object -Property SentBytes -Sum).Sum
+        return [ordered]@{ rx = [double]$rx; tx = [double]$tx; ts = Get-Date }
+    }
+    catch {
+        return [ordered]@{ rx = 0.0; tx = 0.0; ts = Get-Date }
+    }
+}
+
+function Get-CpuPercent {
+    # Win32_Processor is language-neutral. English Get-Counter paths are not
+    # available on every localized Windows installation.
+    try {
+        $values = @(Get-CimInstance Win32_Processor -ErrorAction Stop |
+            Where-Object { $null -ne $_.LoadPercentage } |
+            Select-Object -ExpandProperty LoadPercentage)
+        if ($values.Count -gt 0) {
+            return [math]::Min(100, [math]::Max(0, [double](($values | Measure-Object -Average).Average)))
+        }
+    }
+    catch {}
+
+    try {
+        $sample = Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'" -ErrorAction Stop |
+            Select-Object -First 1 -ExpandProperty PercentProcessorTime
+        if ($null -ne $sample) {
+            return [math]::Min(100, [math]::Max(0, [double]$sample))
+        }
+    }
+    catch {}
+    return 0.0
 }
 
 
@@ -256,6 +313,10 @@ function Merge-Tags {
     return @($out)
 }
 
+if ([string]::IsNullOrWhiteSpace($ServerUrl)) {
+    throw 'ServerUrl is required. Run the installer and enter the server IP and port.'
+}
+
 $osInfo = Get-CimInstance Win32_OperatingSystem
 $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
 $disk = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
@@ -292,12 +353,13 @@ $identityBase = [ordered]@{
 }
 
 $lastNet = Get-NetworkSnapshot
-Write-Host "[$(Get-Date -Format s)] Windows agent started -> $ServerUrl (interval ${IntervalSeconds}s)"
+Write-AgentLog -Level INFO -Message "Windows agent started -> $ServerUrl (interval ${IntervalSeconds}s)"
 
 while ($true) {
+    $stage = 'collecting system metrics'
     try {
         $osInfo = Get-CimInstance Win32_OperatingSystem
-        $cpuCounter = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples[0].CookedValue
+        $cpuCounter = Get-CpuPercent
         $diskNow = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
         $diskUsedGb = [math]::Round(((($diskNow | Measure-Object -Property Size -Sum).Sum - ($diskNow | Measure-Object -Property FreeSpace -Sum).Sum) / 1GB), 2)
         $diskTotalGb = [math]::Round((($diskNow | Measure-Object -Property Size -Sum).Sum / 1GB), 2)
@@ -311,8 +373,10 @@ while ($true) {
         $netNow = Get-NetworkSnapshot
         $elapsed = ($netNow.ts - $lastNet.ts).TotalSeconds
         if ($elapsed -le 0) { $elapsed = 1 }
-        $rxMbps = [math]::Round((($netNow.rx - $lastNet.rx) * 8 / 1MB) / $elapsed, 2)
-        $txMbps = [math]::Round((($netNow.tx - $lastNet.tx) * 8 / 1MB) / $elapsed, 2)
+        $rxDelta = [math]::Max(0, $netNow.rx - $lastNet.rx)
+        $txDelta = [math]::Max(0, $netNow.tx - $lastNet.tx)
+        $rxMbps = [math]::Round(($rxDelta * 8 / 1MB) / $elapsed, 2)
+        $txMbps = [math]::Round(($txDelta * 8 / 1MB) / $elapsed, 2)
         $lastNet = $netNow
 
         $identity = [ordered]@{}
@@ -346,12 +410,14 @@ while ($true) {
             }
         }
 
+        $stage = 'posting report'
         $headers = @{ Authorization = "Bearer $Token" }
         Invoke-RestMethod -Method Post -Uri $ServerUrl -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ($payload | ConvertTo-Json -Depth 8) | Out-Null
-        Write-Host "[$(Get-Date -Format s)] Reported CPU=$($payload.metrics.cpu_percent)% MEM=$memPercent% DISK=$diskPercent% RX=${rxMbps}Mbps TX=${txMbps}Mbps"
+        Write-AgentLog -Level INFO -Message "Reported CPU=$($payload.metrics.cpu_percent)% MEM=$memPercent% DISK=$diskPercent% RX=${rxMbps}Mbps TX=${txMbps}Mbps"
     }
     catch {
-        Write-Warning "Report failed: $($_.Exception.Message)"
+        Write-AgentLog -Level WARN -Message "Report failed during ${stage}: $($_.Exception.Message)"
     }
+    if ($RunOnce) { break }
     Start-Sleep -Seconds $IntervalSeconds
 }
