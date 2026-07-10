@@ -42,6 +42,34 @@ bash <(curl -sSL https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/install.
 Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://raw.githubusercontent.com/Qcby/Qcby-Agent/main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp
 ```
 
+### 如果无法访问 GitHub
+
+有些机器无法直接访问 `raw.githubusercontent.com`，这时可以改用 **jsDelivr** 中转地址：
+
+#### 服务端
+
+```bash
+bash <(curl -sSL https://cdn.jsdelivr.net/gh/Qcby/Qcby-Agent@main/install.sh)
+```
+
+#### Linux 客户端
+
+```bash
+bash <(curl -sSL https://cdn.jsdelivr.net/gh/Qcby/Qcby-Agent@main/install.sh)
+```
+
+进入菜单后选择：
+
+```text
+2) 管理 Linux 客户端
+```
+
+#### Windows 客户端
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qcby-agent-install.ps1'; Invoke-WebRequest 'https://cdn.jsdelivr.net/gh/Qcby/Qcby-Agent@main/client/windows/install.ps1' -OutFile $tmp; PowerShell -ExecutionPolicy Bypass -File $tmp
+```
+
 ---
 
 ## 探针功能
