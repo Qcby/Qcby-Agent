@@ -1,9 +1,9 @@
 param(
     [string]$ServerHost = "",
-    [int]$Port = 8080,
+    [int]$Port = 0,
     [string]$Token = "",
     [string]$AgentId = $env:COMPUTERNAME,
-    [int]$IntervalSeconds = 30,
+    [int]$IntervalSeconds = 0,
     [string]$Region = "",
     [string]$ISP = "",
     [string[]]$Tags = @(),
@@ -107,6 +107,7 @@ function Save-Config {
         [hashtable]$Config
     )
     $configFile = Get-ConfigFilePath
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     $tagsLiteral = (($Config.Tags | ForEach-Object { "'{0}'" -f ($_.Replace("'", "''")) }) -join ', ')
     $configContent = @"
 `$AgentConfig = @{
@@ -173,10 +174,10 @@ function Prompt-Config {
     }
 
     if (-not $ServerHost) { $ServerHost = Read-Value -Prompt (U '\u670d\u52a1\u7aef IP / \u57df\u540d') -Default $serverHostDefault }
-    if (-not $Port) { $Port = [int](Read-Value -Prompt (U '\u670d\u52a1\u7aef\u7aef\u53e3') -Default $portDefault) }
+    if ($Port -le 0) { $Port = [int](Read-Value -Prompt (U '\u670d\u52a1\u7aef\u7aef\u53e3') -Default $portDefault) }
     if (-not $Token) { $Token = Read-Value -Prompt (U '\u0041\u0067\u0065\u006e\u0074\u0020\u0054\u006f\u006b\u0065\u006e') -Default $tokenDefault }
     if (-not $AgentId) { $AgentId = Read-Value -Prompt (U '\u0041\u0067\u0065\u006e\u0074\u0020\u0049\u0044') -Default $agentIdDefault }
-    if (-not $IntervalSeconds) { $IntervalSeconds = [int](Read-Value -Prompt (U '\u4e0a\u62a5\u95f4\u9694\u79d2\u6570') -Default $intervalDefault) }
+    if ($IntervalSeconds -le 0) { $IntervalSeconds = [int](Read-Value -Prompt (U '\u4e0a\u62a5\u95f4\u9694\u79d2\u6570') -Default $intervalDefault) }
     if (-not $Region) { $Region = Read-Value -Prompt (U '\u533a\u57df\uff08\u53ef\u7559\u7a7a\uff09') -Default $regionDefault }
     if (-not $ISP) { $ISP = Read-Value -Prompt (U '\u8fd0\u8425\u5546 / \u7ebf\u8def\uff08\u53ef\u7559\u7a7a\uff09') -Default $ispDefault }
     if (-not $Tags -or $Tags.Count -eq 0) {
