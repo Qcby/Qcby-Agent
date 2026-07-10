@@ -82,13 +82,11 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; $tmp = Join-Path $env:TEMP 'qc
 
 ## 页面截图
 
-> 这里预留给你粘贴后台页面 / 首页截图
-
-```md
+### 首页
 ![Qcby-Agent 页面截图](https://github.com/user-attachments/assets/dc12cded-9699-497a-9db8-5e37485ac6f1)
-![后台管理](https://github.com/user-attachments/assets/a4d82dea-6831-4c7b-861e-e9c653d779d8)
-```
 
+### 后台管理
+![后台管理](https://github.com/user-attachments/assets/a4d82dea-6831-4c7b-861e-e9c653d779d8)
 
 ---
 
